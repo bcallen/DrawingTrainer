@@ -1,0 +1,164 @@
+<UserControl x:Class="DrawingTrainer.Views.GalleryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:DrawingTrainer.Converters"
+             xmlns:views="clr-namespace:DrawingTrainer.Views"
+             Focusable="True" KeyDown="OnKeyDown">
+    <UserControl.Resources>
+        <converters:FilePathToImageConverter x:Key="FilePathToImage"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:NullToVisibilityConverter x:Key="NullToVis"/>
+    </UserControl.Resources>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Gallery" Style="{StaticResource PageHeader}"/>
+
+        <!-- Tag Filter -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,16">
+            <TextBlock Text="Filter:" VerticalAlignment="Center" Margin="0,0,8,0"
+                       Foreground="{StaticResource TextLightBrush}" FontSize="14"/>
+            <Button Content="All" Style="{StaticResource TagToggleButton}" Margin="0,0,4,0"
+                    Click="ClearFilter_Click"/>
+            <ItemsControl ItemsSource="{Binding Tags}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Content="{Binding Name}" Style="{StaticResource TagToggleButton}" Margin="4,0"
+                                Click="TagFilter_Click" Tag="{Binding}"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+
+        <!-- Gallery Grid -->
+        <Grid Grid.Row="2">
+            <!-- Thumbnail Grid -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          Visibility="{Binding SelectedDrawing, Converter={StaticResource NullToVis}, ConverterParameter=Invert}">
+                <ItemsControl ItemsSource="{Binding Drawings}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource Card}" Margin="4" Width="200" Cursor="Hand">
+                                <Border.InputBindings>
+                                    <MouseBinding MouseAction="LeftClick"
+                                                  Command="{Binding DataContext.SelectDrawingCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                  CommandParameter="{Binding}"/>
+                                </Border.InputBindings>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="150"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <Image Grid.Row="0"
+                                           Source="{Binding DrawingPath, Converter={StaticResource FilePathToImage}, ConverterParameter=200, IsAsync=True}"
+                                           Stretch="UniformToFill">
+                                        <Image.Clip>
+                                            <RectangleGeometry Rect="0,0,168,150" RadiusX="4" RadiusY="4"/>
+                                        </Image.Clip>
+                                    </Image>
+
+                                    <StackPanel Grid.Row="1" Margin="0,8,0,0">
+                                        <DockPanel>
+                                            <TextBlock Text="{Binding CategoryName}" FontSize="13" FontWeight="SemiBold"
+                                                       DockPanel.Dock="Left"/>
+                                            <TextBlock Text="{Binding DurationText}" FontSize="11"
+                                                       Foreground="{StaticResource PrimaryBrush}" FontWeight="SemiBold"
+                                                       DockPanel.Dock="Right" HorizontalAlignment="Right"
+                                                       VerticalAlignment="Center"/>
+                                        </DockPanel>
+                                        <TextBlock Text="{Binding Date, StringFormat='{}{0:MMM d, yyyy}'}"
+                                                   FontSize="11" Foreground="{StaticResource TextLightBrush}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Detail View -->
+            <Grid Visibility="{Binding SelectedDrawing, Converter={StaticResource NullToVis}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                    <Button Content="Back" Style="{StaticResource SecondaryButton}"
+                            Command="{Binding ClearSelectionCommand}" DockPanel.Dock="Left"
+                            Padding="12,6"/>
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                        <Button Content="Previous" Style="{StaticResource SecondaryButton}"
+                                Command="{Binding NavigatePreviousCommand}" Padding="12,6" Margin="0,0,4,0"/>
+                        <Button Content="Next" Style="{StaticResource SecondaryButton}"
+                                Command="{Binding NavigateNextCommand}" Padding="12,6" Margin="0,0,4,0"/>
+                        <Button Content="Toggle Reference" Style="{StaticResource PrimaryButton}"
+                                Padding="12,6"
+                                Command="{Binding ToggleReferenceCommand}"
+                                CommandParameter="{Binding SelectedDrawing}"/>
+                    </StackPanel>
+                </DockPanel>
+
+                <!-- Images -->
+                <Grid Grid.Row="1">
+                    <!-- Drawing -->
+                    <views:ZoomableImage
+                        Source="{Binding SelectedDrawing.DrawingPath, Converter={StaticResource FilePathToImage}, ConverterParameter=1200}"/>
+
+                    <!-- Reference Overlay -->
+                    <Border Background="#DD000000"
+                            Visibility="{Binding SelectedDrawing.ShowReference, Converter={StaticResource BoolToVis}}">
+                        <views:ZoomableImage Margin="16"
+                            Source="{Binding SelectedDrawing.ReferencePath, Converter={StaticResource FilePathToImage}, ConverterParameter=1200}"/>
+                    </Border>
+                </Grid>
+
+                <!-- Info -->
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+                    <TextBlock Text="{Binding SelectedDrawing.CategoryName}" FontSize="16" FontWeight="SemiBold"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding SelectedDrawing.DurationText}" FontSize="14"
+                               Foreground="{StaticResource PrimaryBrush}" FontWeight="SemiBold"
+                               VerticalAlignment="Center" Margin="16,0,0,0"/>
+                    <TextBlock Text="{Binding SelectedDrawing.Date, StringFormat='{}{0:MMMM d, yyyy}'}"
+                               FontSize="14" Foreground="{StaticResource TextLightBrush}"
+                               VerticalAlignment="Center" Margin="16,0,0,0"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Empty State -->
+            <TextBlock Text="No drawings yet. Complete a session and upload your work!"
+                       FontSize="16" Foreground="{StaticResource TextLightBrush}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Drawings.Count}" Value="0">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </Grid>
+    </Grid>
+</UserControl>

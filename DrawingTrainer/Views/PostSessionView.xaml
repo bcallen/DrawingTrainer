@@ -1,0 +1,88 @@
+<UserControl x:Class="DrawingTrainer.Views.PostSessionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:DrawingTrainer.Converters">
+    <UserControl.Resources>
+        <converters:FilePathToImageConverter x:Key="FilePathToImage"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Session Complete!" Style="{StaticResource PageHeader}"/>
+        <TextBlock Grid.Row="1" Text="{Binding SessionSummary}" FontSize="14"
+                   Foreground="{StaticResource TextLightBrush}" Margin="0,0,0,20"/>
+
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding ExerciseResults}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="120"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Reference Thumbnail -->
+                                <Border Grid.Column="0" CornerRadius="6" ClipToBounds="True" Height="90">
+                                    <Image Source="{Binding ReferencePhotoPath, Converter={StaticResource FilePathToImage}, ConverterParameter=120}"
+                                           Stretch="UniformToFill"/>
+                                </Border>
+
+                                <!-- Info -->
+                                <StackPanel Grid.Column="1" Margin="16,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding CategoryName}" FontSize="16" FontWeight="SemiBold"/>
+                                    <TextBlock FontSize="13" Foreground="{StaticResource TextLightBrush}" Margin="0,4,0,0">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="Completed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding WasSkipped}" Value="True">
+                                                        <Setter Property="Text" Value="Skipped"/>
+                                                        <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Text="Drawing uploaded!" FontSize="12"
+                                               Foreground="{StaticResource SuccessBrush}" Margin="0,4,0,0"
+                                               Visibility="{Binding HasDrawing, Converter={StaticResource BoolToVis}}"/>
+                                </StackPanel>
+
+                                <!-- Upload Button / Drawing Thumbnail -->
+                                <Grid Grid.Column="2">
+                                    <Button Content="Upload Drawing" Style="{StaticResource PrimaryButton}"
+                                            FontSize="11" Padding="8,6"
+                                            Command="{Binding DataContext.UploadDrawingCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Visibility="{Binding HasDrawing, Converter={StaticResource BoolToVis}, ConverterParameter=Invert}"/>
+                                    <Border CornerRadius="6" ClipToBounds="True" Height="90"
+                                            Visibility="{Binding HasDrawing, Converter={StaticResource BoolToVis}}">
+                                        <Image Source="{Binding DrawingPath, Converter={StaticResource FilePathToImage}, ConverterParameter=120}"
+                                               Stretch="UniformToFill"/>
+                                    </Border>
+                                </Grid>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Back to Planner" Style="{StaticResource SecondaryButton}"
+                    Command="{Binding BackToPlannerCommand}" Margin="0,0,8,0"/>
+            <Button Content="View Gallery" Style="{StaticResource PrimaryButton}"
+                    Command="{Binding DoneCommand}"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

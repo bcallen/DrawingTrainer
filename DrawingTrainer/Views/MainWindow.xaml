@@ -1,0 +1,68 @@
+<Window x:Class="DrawingTrainer.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:DrawingTrainer.ViewModels"
+        xmlns:views="clr-namespace:DrawingTrainer.Views"
+        Title="Drawing Trainer" Height="768" Width="1200"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BackgroundBrush}">
+
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type vm:LibraryViewModel}">
+            <views:LibraryView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:PhotoImportViewModel}">
+            <views:PhotoImportView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SessionPlannerViewModel}">
+            <views:SessionPlannerView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ActiveSessionViewModel}">
+            <views:ActiveSessionView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:PostSessionViewModel}">
+            <views:PostSessionView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:GalleryViewModel}">
+            <views:GalleryView/>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <Border Grid.Column="0" Background="{StaticResource SidebarBrush}">
+            <DockPanel>
+                <!-- App Title -->
+                <StackPanel DockPanel.Dock="Top" Margin="16,20,16,24">
+                    <TextBlock Text="Drawing" FontSize="22" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="Trainer" FontSize="22" FontWeight="Light" Foreground="#94A3B8"/>
+                </StackPanel>
+
+                <!-- Navigation -->
+                <StackPanel DockPanel.Dock="Top">
+                    <Button Content="Photo Library" Style="{StaticResource SidebarButton}"
+                            Command="{Binding NavigateToLibraryCommand}"/>
+                    <Button Content="Import Photos" Style="{StaticResource SidebarButton}"
+                            Command="{Binding NavigateToImportCommand}"/>
+                    <Button Content="Session Planner" Style="{StaticResource SidebarButton}"
+                            Command="{Binding NavigateToPlannerCommand}"/>
+                    <Button Content="Gallery" Style="{StaticResource SidebarButton}"
+                            Command="{Binding NavigateToGalleryCommand}"/>
+                </StackPanel>
+
+                <!-- Spacer -->
+                <StackPanel DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Margin="16,0,16,16">
+                    <TextBlock Text="v1.0" FontSize="11" Foreground="#4A5568"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Content Area -->
+        <ContentControl Grid.Column="1" Content="{Binding CurrentViewModel}"/>
+    </Grid>
+</Window>
