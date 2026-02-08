@@ -30,7 +30,8 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
@@ -38,31 +39,43 @@
         <Border Grid.Column="0" Background="{StaticResource SidebarBrush}">
             <DockPanel>
                 <!-- App Title -->
-                <StackPanel DockPanel.Dock="Top" Margin="16,20,16,24">
-                    <TextBlock Text="Drawing" FontSize="22" FontWeight="Bold" Foreground="White"/>
-                    <TextBlock Text="Trainer" FontSize="22" FontWeight="Light" Foreground="#94A3B8"/>
+                <StackPanel DockPanel.Dock="Top" Margin="20,28,20,32">
+                    <TextBlock Text="D R A W I N G" FontSize="18" FontWeight="ExtraBold"
+                               Foreground="{StaticResource PrimaryBrush}"/>
+                    <TextBlock Text="T R A I N E R" FontSize="18" FontWeight="Thin"
+                               Foreground="#444444"/>
                 </StackPanel>
+
+                <!-- Divider -->
+                <Border DockPanel.Dock="Top" Height="1" Background="{StaticResource BorderBrush}"
+                        Margin="20,0,20,16"/>
 
                 <!-- Navigation -->
                 <StackPanel DockPanel.Dock="Top">
-                    <Button Content="Photo Library" Style="{StaticResource SidebarButton}"
+                    <TextBlock Text="N A V I G A T E" FontSize="9" FontWeight="Bold" Foreground="#333333"
+                               Margin="20,4,0,8"/>
+                    <Button Content="LIBRARY" Style="{StaticResource SidebarButton}"
                             Command="{Binding NavigateToLibraryCommand}"/>
-                    <Button Content="Import Photos" Style="{StaticResource SidebarButton}"
+                    <Button Content="IMPORT" Style="{StaticResource SidebarButton}"
                             Command="{Binding NavigateToImportCommand}"/>
-                    <Button Content="Session Planner" Style="{StaticResource SidebarButton}"
+                    <Button Content="SESSIONS" Style="{StaticResource SidebarButton}"
                             Command="{Binding NavigateToPlannerCommand}"/>
-                    <Button Content="Gallery" Style="{StaticResource SidebarButton}"
+                    <Button Content="GALLERY" Style="{StaticResource SidebarButton}"
                             Command="{Binding NavigateToGalleryCommand}"/>
                 </StackPanel>
 
-                <!-- Spacer -->
-                <StackPanel DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Margin="16,0,16,16">
-                    <TextBlock Text="v1.0" FontSize="11" Foreground="#4A5568"/>
+                <!-- Version -->
+                <StackPanel DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Margin="20,0,20,20">
+                    <Border Height="1" Background="{StaticResource BorderBrush}" Margin="0,0,0,12"/>
+                    <TextBlock Text="v1.0" FontSize="10" Foreground="#333333" FontWeight="SemiBold"/>
                 </StackPanel>
             </DockPanel>
         </Border>
 
+        <!-- Sidebar edge accent -->
+        <Border Grid.Column="1" Width="1" Background="{StaticResource BorderBrush}"/>
+
         <!-- Content Area -->
-        <ContentControl Grid.Column="1" Content="{Binding CurrentViewModel}"/>
+        <ContentControl Grid.Column="2" Content="{Binding CurrentViewModel}"/>
     </Grid>
 </Window>

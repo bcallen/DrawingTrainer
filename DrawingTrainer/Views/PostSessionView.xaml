@@ -32,14 +32,15 @@
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Reference Thumbnail -->
-                                <Border Grid.Column="0" CornerRadius="6" ClipToBounds="True" Height="90">
+                                <Border Grid.Column="0" CornerRadius="2" ClipToBounds="True" Height="90">
                                     <Image Source="{Binding ReferencePhotoPath, Converter={StaticResource FilePathToImage}, ConverterParameter=120}"
                                            Stretch="UniformToFill"/>
                                 </Border>
 
                                 <!-- Info -->
                                 <StackPanel Grid.Column="1" Margin="16,0" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding CategoryName}" FontSize="16" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding CategoryName}" FontSize="16" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextBrush}"/>
                                     <TextBlock FontSize="13" Foreground="{StaticResource TextLightBrush}" Margin="0,4,0,0">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
@@ -65,7 +66,7 @@
                                             Command="{Binding DataContext.UploadDrawingCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}"
                                             Visibility="{Binding HasDrawing, Converter={StaticResource BoolToVis}, ConverterParameter=Invert}"/>
-                                    <Border CornerRadius="6" ClipToBounds="True" Height="90"
+                                    <Border CornerRadius="2" ClipToBounds="True" Height="90"
                                             Visibility="{Binding HasDrawing, Converter={StaticResource BoolToVis}}">
                                         <Image Source="{Binding DrawingPath, Converter={StaticResource FilePathToImage}, ConverterParameter=120}"
                                                Stretch="UniformToFill"/>

@@ -38,7 +38,8 @@
                 MaxHeight="150"
                 Visibility="{Binding SelectedFiles.Count, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}">
             <StackPanel>
-                <TextBlock Text="Selected Files" FontWeight="SemiBold" Margin="0,0,0,8" FontSize="14"/>
+                <TextBlock Text="Selected Files" FontWeight="SemiBold" Margin="0,0,0,8" FontSize="14"
+                           Foreground="{StaticResource TextBrush}"/>
                 <ScrollViewer MaxHeight="100" VerticalScrollBarVisibility="Auto">
                     <ItemsControl ItemsSource="{Binding SelectedFiles}">
                         <ItemsControl.ItemTemplate>
@@ -72,13 +73,14 @@
                                 <ToggleButton.Style>
                                     <Style TargetType="ToggleButton">
                                         <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+                                        <Setter Property="Foreground" Value="{StaticResource TextLightBrush}"/>
                                         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="ToggleButton">
                                                     <Border Background="{TemplateBinding Background}"
                                                             BorderBrush="{TemplateBinding BorderBrush}"
-                                                            BorderThickness="1" CornerRadius="14"
+                                                            BorderThickness="1" CornerRadius="2"
                                                             Padding="{TemplateBinding Padding}">
                                                         <ContentPresenter HorizontalAlignment="Center"/>
                                                     </Border>

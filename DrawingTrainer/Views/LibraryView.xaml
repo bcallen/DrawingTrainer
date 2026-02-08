@@ -47,7 +47,7 @@
         <!-- Tag Editing Bar (visible when photos are selected) -->
         <Border Grid.Row="2" Background="{StaticResource CardBrush}"
                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                CornerRadius="8" Padding="12" Margin="0,0,0,12"
+                CornerRadius="2" Padding="12" Margin="0,0,0,12"
                 Visibility="{Binding HasSelection, Converter={StaticResource BoolToVis}}">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
@@ -73,7 +73,7 @@
                                             <Setter Property="Template">
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="Button">
-                                                        <Border x:Name="Bd" CornerRadius="14"
+                                                        <Border x:Name="Bd" CornerRadius="2"
                                                                 Padding="{TemplateBinding Padding}"
                                                                 Background="{StaticResource BackgroundBrush}"
                                                                 BorderBrush="{StaticResource BorderBrush}"
@@ -86,8 +86,8 @@
                                                                 <Setter Property="Foreground" Value="White"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding IsPartial}" Value="True">
-                                                                <Setter TargetName="Bd" Property="Background" Value="#93C5FD"/>
-                                                                <Setter Property="Foreground" Value="White"/>
+                                                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentBrush}"/>
+                                                                <Setter Property="Foreground" Value="Black"/>
                                                             </DataTrigger>
                                                             <Trigger Property="IsMouseOver" Value="True">
                                                                 <Setter TargetName="Bd" Property="Opacity" Value="0.85"/>

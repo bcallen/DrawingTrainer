@@ -76,7 +76,7 @@
                                     <StackPanel Grid.Row="1" Margin="0,8,0,0">
                                         <DockPanel>
                                             <TextBlock Text="{Binding CategoryName}" FontSize="13" FontWeight="SemiBold"
-                                                       DockPanel.Dock="Left"/>
+                                                       Foreground="{StaticResource TextBrush}" DockPanel.Dock="Left"/>
                                             <TextBlock Text="{Binding DurationText}" FontSize="11"
                                                        Foreground="{StaticResource PrimaryBrush}" FontWeight="SemiBold"
                                                        DockPanel.Dock="Right" HorizontalAlignment="Right"
@@ -124,7 +124,7 @@
                         Source="{Binding SelectedDrawing.DrawingPath, Converter={StaticResource FilePathToImage}, ConverterParameter=1200}"/>
 
                     <!-- Reference Overlay -->
-                    <Border Background="#DD000000"
+                    <Border Background="#EE121212"
                             Visibility="{Binding SelectedDrawing.ShowReference, Converter={StaticResource BoolToVis}}">
                         <views:ZoomableImage Margin="16"
                             Source="{Binding SelectedDrawing.ReferencePath, Converter={StaticResource FilePathToImage}, ConverterParameter=1200}"/>
@@ -134,7 +134,7 @@
                 <!-- Info -->
                 <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
                     <TextBlock Text="{Binding SelectedDrawing.CategoryName}" FontSize="16" FontWeight="SemiBold"
-                               VerticalAlignment="Center"/>
+                               Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>
                     <TextBlock Text="{Binding SelectedDrawing.DurationText}" FontSize="14"
                                Foreground="{StaticResource PrimaryBrush}" FontWeight="SemiBold"
                                VerticalAlignment="Center" Margin="16,0,0,0"/>

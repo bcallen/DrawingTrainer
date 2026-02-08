@@ -98,27 +98,28 @@
 
             <!-- Pause Overlay -->
             <Border Grid.Row="0" Grid.RowSpan="3"
-                    Background="#AA000000"
+                    Background="#EE121212"
                     Visibility="{Binding IsPaused, Converter={StaticResource BoolToVis}}">
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <TextBlock Text="PAUSED" FontSize="48" FontWeight="Bold" Foreground="White"
+                    <TextBlock Text="P A U S E D" FontSize="48" FontWeight="ExtraBold"
+                               Foreground="{StaticResource PrimaryBrush}"
                                HorizontalAlignment="Center"/>
                     <TextBlock Text="Press Space or click Resume to continue" FontSize="16"
-                               Foreground="#AAA" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                               Foreground="{StaticResource TextLightBrush}" HorizontalAlignment="Center" Margin="0,12,0,0"/>
                 </StackPanel>
             </Border>
         </Grid>
 
         <!-- Break State -->
         <Grid Visibility="{Binding State, Converter={StaticResource EnumToVis}, ConverterParameter=Break}">
-            <Border Background="#1A8B5CF6">
+            <Border Background="#1AB388FF">
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <TextBlock Text="BREAK" FontSize="48" FontWeight="Bold"
+                    <TextBlock Text="B R E A K" FontSize="48" FontWeight="ExtraBold"
                                Foreground="{StaticResource BreakBrush}" HorizontalAlignment="Center"/>
                     <TextBlock Text="Take a photo of your drawing!" FontSize="20"
                                Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center"
                                Margin="0,12,0,0"/>
-                    <TextBlock Text="{Binding TimerText}" FontSize="64" FontWeight="Bold"
+                    <TextBlock Text="{Binding TimerText}" FontSize="64" FontWeight="ExtraBold"
                                Foreground="{StaticResource BreakBrush}" HorizontalAlignment="Center"
                                Margin="0,24,0,0" FontFamily="Consolas"/>
                     <TextBlock Text="Next exercise starting soon..." FontSize="16"
