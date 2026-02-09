@@ -15,6 +15,7 @@ public interface IDrawingSessionService
     Task<List<DrawingSession>> GetCompletedSessionsAsync();
     Task<DrawingSession?> GetSessionWithResultsAsync(int sessionId);
     Task<List<CompletedDrawing>> GetDrawingsAsync(int? tagId = null);
+    Task<CompletedDrawing> UploadManualDrawingAsync(string filePath, int tagId, int durationSeconds, DateTime drawnAt, int? referencePhotoId);
 }
 
 public class DrawingSessionService : IDrawingSessionService
@@ -149,17 +150,43 @@ public class DrawingSessionService : IDrawingSessionService
         await using var context = await _contextFactory.CreateDbContextAsync();
         var query = context.CompletedDrawings
             .Include(cd => cd.SessionExerciseResult)
-                .ThenInclude(ser => ser.ReferencePhoto)
+                .ThenInclude(ser => ser!.ReferencePhoto)
             .Include(cd => cd.SessionExerciseResult)
-                .ThenInclude(ser => ser.SessionExercise)
+                .ThenInclude(ser => ser!.SessionExercise)
                     .ThenInclude(se => se.Tag)
+            .Include(cd => cd.Tag)
+            .Include(cd => cd.ReferencePhoto)
             .AsQueryable();
 
         if (tagId.HasValue)
         {
-            query = query.Where(cd => cd.SessionExerciseResult.SessionExercise.TagId == tagId.Value);
+            query = query.Where(cd =>
+                (cd.SessionExerciseResultId != null && cd.SessionExerciseResult!.SessionExercise.TagId == tagId.Value) ||
+                (cd.SessionExerciseResultId == null && cd.TagId == tagId.Value));
         }
 
         return await query.OrderByDescending(cd => cd.UploadedAt).ToListAsync();
+    }
+
+    public async Task<CompletedDrawing> UploadManualDrawingAsync(
+        string filePath, int tagId, int durationSeconds, DateTime drawnAt, int? referencePhotoId)
+    {
+        var storedPath = await _storageService.StoreDrawingPhotoAsync(filePath);
+
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var drawing = new CompletedDrawing
+        {
+            FilePath = storedPath,
+            OriginalFileName = Path.GetFileName(filePath),
+            UploadedAt = DateTime.Now,
+            TagId = tagId,
+            DurationSeconds = durationSeconds,
+            DrawnAt = drawnAt,
+            ReferencePhotoId = referencePhotoId
+        };
+
+        context.CompletedDrawings.Add(drawing);
+        await context.SaveChangesAsync();
+        return drawing;
     }
 }

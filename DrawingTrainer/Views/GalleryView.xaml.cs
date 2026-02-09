@@ -48,6 +48,16 @@ public partial class GalleryView : UserControl
                 vm.ClearSelectionCommand.Execute(null);
                 e.Handled = true;
                 break;
+            case Key.Space:
+                if (vm.SelectedDrawing != null)
+                {
+                    DetailDrawingImage?.ResetZoom();
+                    DetailReferenceImage?.ResetZoom();
+                    SbsDrawingImage?.ResetZoom();
+                    SbsReferenceImage?.ResetZoom();
+                    e.Handled = true;
+                }
+                break;
         }
     }
 }

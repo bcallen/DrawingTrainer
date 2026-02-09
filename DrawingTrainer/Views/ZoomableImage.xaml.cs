@@ -2,18 +2,20 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace DrawingTrainer.Views;
 
 public partial class ZoomableImage : UserControl
 {
+    private Point _mouseDownPos;
     private Point _lastMousePos;
     private bool _isDragging;
 
     private const double MinScale = 1.0;
     private const double MaxScale = 10.0;
     private const double ZoomFactor = 1.15;
+    private const double ClickZoomScale = 3.0;
+    private const double ClickThreshold = 5.0;
 
     public static readonly DependencyProperty SourceProperty =
         DependencyProperty.Register(nameof(Source), typeof(ImageSource), typeof(ZoomableImage),
@@ -33,7 +35,7 @@ public partial class ZoomableImage : UserControl
         MouseLeftButtonDown += OnMouseLeftButtonDown;
         MouseLeftButtonUp += OnMouseLeftButtonUp;
         MouseMove += OnMouseMove;
-        MouseDoubleClick += OnMouseDoubleClick;
+        MouseRightButtonUp += OnMouseRightButtonUp;
     }
 
     private static void OnSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -56,7 +58,6 @@ public partial class ZoomableImage : UserControl
         if (newScaleX < MinScale || newScaleX > MaxScale)
             return;
 
-        // Zoom toward mouse position
         var imgPos = Container.TranslatePoint(mousePos, Img);
         double relX = imgPos.X / Img.ActualWidth;
         double relY = imgPos.Y / Img.ActualHeight;
@@ -64,7 +65,6 @@ public partial class ZoomableImage : UserControl
         ScaleTransform.ScaleX = newScaleX;
         ScaleTransform.ScaleY = newScaleY;
 
-        // Adjust translation so the point under the mouse stays fixed
         Img.UpdateLayout();
         var newImgPos = Container.TranslatePoint(mousePos, Img);
         double deltaX = (newImgPos.X / Img.ActualWidth - relX) * Img.ActualWidth * newScaleX;
@@ -79,32 +79,49 @@ public partial class ZoomableImage : UserControl
 
     private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (ScaleTransform.ScaleX <= MinScale)
-            return;
-
-        _isDragging = true;
-        _lastMousePos = e.GetPosition(this);
+        _mouseDownPos = e.GetPosition(this);
+        _lastMousePos = _mouseDownPos;
+        _isDragging = false;
         CaptureMouse();
-        Cursor = Cursors.Hand;
         e.Handled = true;
     }
 
     private void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
-        if (_isDragging)
+        bool wasDragging = _isDragging;
+        _isDragging = false;
+        ReleaseMouseCapture();
+        Cursor = Cursors.Arrow;
+
+        if (!wasDragging)
         {
-            _isDragging = false;
-            ReleaseMouseCapture();
-            Cursor = Cursors.Arrow;
-            e.Handled = true;
+            // Single click: zoom in centered on click point
+            var clickPos = e.GetPosition(Container);
+            ClickZoom(clickPos);
         }
+        e.Handled = true;
     }
 
     private void OnMouseMove(object sender, MouseEventArgs e)
     {
-        if (!_isDragging) return;
+        if (!IsMouseCaptured) return;
 
         var currentPos = e.GetPosition(this);
+
+        if (!_isDragging)
+        {
+            double distance = (currentPos - _mouseDownPos).Length;
+            if (distance > ClickThreshold && ScaleTransform.ScaleX > MinScale)
+            {
+                _isDragging = true;
+                Cursor = Cursors.Hand;
+            }
+            else
+            {
+                return;
+            }
+        }
+
         double dx = currentPos.X - _lastMousePos.X;
         double dy = currentPos.Y - _lastMousePos.Y;
         _lastMousePos = currentPos;
@@ -114,33 +131,26 @@ public partial class ZoomableImage : UserControl
         ClampPan();
     }
 
-    private void OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
+    private void OnMouseRightButtonUp(object sender, MouseButtonEventArgs e)
     {
-        if (ScaleTransform.ScaleX > MinScale)
-        {
-            ResetZoom();
-        }
-        else
-        {
-            // Zoom to 3x on double-click, centered on click point
-            var mousePos = e.GetPosition(Container);
-            double targetScale = 3.0;
-
-            ScaleTransform.ScaleX = targetScale;
-            ScaleTransform.ScaleY = targetScale;
-
-            // Center the zoom on the clicked point
-            double containerCenterX = Container.ActualWidth / 2;
-            double containerCenterY = Container.ActualHeight / 2;
-            TranslateTransform.X = (containerCenterX - mousePos.X) * (targetScale - 1) / targetScale;
-            TranslateTransform.Y = (containerCenterY - mousePos.Y) * (targetScale - 1) / targetScale;
-
-            ClampPan();
-        }
+        ResetZoom();
         e.Handled = true;
     }
 
-    private void ResetZoom()
+    private void ClickZoom(Point containerPoint)
+    {
+        ScaleTransform.ScaleX = ClickZoomScale;
+        ScaleTransform.ScaleY = ClickZoomScale;
+
+        double containerCenterX = Container.ActualWidth / 2;
+        double containerCenterY = Container.ActualHeight / 2;
+        TranslateTransform.X = (containerCenterX - containerPoint.X) * (ClickZoomScale - 1) / ClickZoomScale;
+        TranslateTransform.Y = (containerCenterY - containerPoint.Y) * (ClickZoomScale - 1) / ClickZoomScale;
+
+        ClampPan();
+    }
+
+    public void ResetZoom()
     {
         ScaleTransform.ScaleX = 1.0;
         ScaleTransform.ScaleY = 1.0;

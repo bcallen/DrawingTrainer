@@ -8,6 +8,7 @@ public class ReferencePhoto
     public int Width { get; set; }
     public int Height { get; set; }
     public DateTime ImportedAt { get; set; }
+    public string? ThumbnailPath { get; set; }
     public List<ReferencePhotoTag> ReferencePhotoTags { get; set; } = [];
     public List<SessionExerciseResult> SessionExerciseResults { get; set; } = [];
 }

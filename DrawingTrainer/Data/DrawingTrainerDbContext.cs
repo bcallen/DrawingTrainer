@@ -65,7 +65,20 @@ public class DrawingTrainerDbContext : DbContext
         modelBuilder.Entity<CompletedDrawing>()
             .HasOne(cd => cd.SessionExerciseResult)
             .WithOne(ser => ser.CompletedDrawing)
-            .HasForeignKey<CompletedDrawing>(cd => cd.SessionExerciseResultId);
+            .HasForeignKey<CompletedDrawing>(cd => cd.SessionExerciseResultId)
+            .IsRequired(false);
+
+        modelBuilder.Entity<CompletedDrawing>()
+            .HasOne(cd => cd.Tag)
+            .WithMany()
+            .HasForeignKey(cd => cd.TagId)
+            .IsRequired(false);
+
+        modelBuilder.Entity<CompletedDrawing>()
+            .HasOne(cd => cd.ReferencePhoto)
+            .WithMany()
+            .HasForeignKey(cd => cd.ReferencePhotoId)
+            .IsRequired(false);
 
         // Seed default tags
         modelBuilder.Entity<Tag>().HasData(

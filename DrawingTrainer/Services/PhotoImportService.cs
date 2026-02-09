@@ -22,13 +22,16 @@ public class PhotoImportService : IPhotoImportService
 
     private readonly IDbContextFactory<DrawingTrainerDbContext> _contextFactory;
     private readonly IPhotoStorageService _storageService;
+    private readonly IThumbnailService _thumbnailService;
 
     public PhotoImportService(
         IDbContextFactory<DrawingTrainerDbContext> contextFactory,
-        IPhotoStorageService storageService)
+        IPhotoStorageService storageService,
+        IThumbnailService thumbnailService)
     {
         _contextFactory = contextFactory;
         _storageService = storageService;
+        _thumbnailService = thumbnailService;
     }
 
     public bool IsValidImageFile(string filePath)
@@ -41,6 +44,14 @@ public class PhotoImportService : IPhotoImportService
         var storedPath = await _storageService.StoreReferencePhotoAsync(filePath);
         var (width, height) = GetImageDimensions(storedPath);
 
+        // Generate thumbnail
+        string? thumbnailPath = null;
+        try
+        {
+            thumbnailPath = await _thumbnailService.GenerateThumbnailAsync(storedPath);
+        }
+        catch { }
+
         await using var context = await _contextFactory.CreateDbContextAsync();
         var photo = new ReferencePhoto
         {
@@ -49,6 +60,7 @@ public class PhotoImportService : IPhotoImportService
             Width = width,
             Height = height,
             ImportedAt = DateTime.Now,
+            ThumbnailPath = thumbnailPath,
         };
 
         context.ReferencePhotos.Add(photo);
