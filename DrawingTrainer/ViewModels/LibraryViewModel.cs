@@ -16,6 +16,11 @@ public partial class LibraryPhotoItem : ObservableObject
     [ObservableProperty]
     private bool _isSelected;
 
+    public string DisplayImagePath =>
+        !string.IsNullOrEmpty(Photo.ThumbnailPath) && File.Exists(Photo.ThumbnailPath)
+            ? Photo.ThumbnailPath
+            : Photo.FilePath;
+
     public string TagNames => string.Join(", ",
         Photo.ReferencePhotoTags?.Select(t => t.Tag?.Name).Where(n => n != null) ?? []);
 
@@ -35,8 +40,13 @@ public partial class TagAssignment : ObservableObject
 
 public partial class LibraryViewModel : ObservableObject
 {
+    private const int PageSize = 100;
+
     private readonly IDbContextFactory<DrawingTrainerDbContext> _contextFactory;
     private readonly INavigationService _navigationService;
+
+    private int _loadedCount;
+    private int _totalCount;
 
     [ObservableProperty]
     private ObservableCollection<LibraryPhotoItem> _photos = [];
@@ -52,6 +62,9 @@ public partial class LibraryViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _hasSelection;
+
+    [ObservableProperty]
+    private bool _hasMorePhotos;
 
     [ObservableProperty]
     private ObservableCollection<TagAssignment> _tagAssignments = [];
@@ -76,6 +89,14 @@ public partial class LibraryViewModel : ObservableObject
     private void NavigateToImport()
     {
         _navigationService.NavigateTo<PhotoImportViewModel>();
+    }
+
+    [RelayCommand]
+    private void NavigateToAddDrawing()
+    {
+        var selected = Photos.Where(p => p.IsSelected).ToList();
+        int? refPhotoId = selected.Count == 1 ? selected[0].Photo.Id : null;
+        _navigationService.NavigateTo<GalleryViewModel>(vm => vm.RequestAddDrawing(refPhotoId));
     }
 
     [RelayCommand]
@@ -165,9 +186,80 @@ public partial class LibraryViewModel : ObservableObject
         await context.SaveChangesAsync();
 
         try { File.Delete(item.Photo.FilePath); } catch { }
+        if (!string.IsNullOrEmpty(item.Photo.ThumbnailPath))
+        {
+            try { File.Delete(item.Photo.ThumbnailPath); } catch { }
+        }
 
         Photos.Remove(item);
+        _loadedCount--;
+        _totalCount--;
         UpdateSelectionState();
+    }
+
+    [RelayCommand]
+    private async Task DeleteSelected()
+    {
+        var selected = Photos.Where(p => p.IsSelected).ToList();
+        if (selected.Count == 0) return;
+
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var ids = selected.Select(s => s.Photo.Id).ToList();
+
+        var dbPhotos = await context.ReferencePhotos
+            .Include(p => p.ReferencePhotoTags)
+            .Where(p => ids.Contains(p.Id))
+            .ToListAsync();
+
+        foreach (var dbPhoto in dbPhotos)
+        {
+            context.ReferencePhotoTags.RemoveRange(dbPhoto.ReferencePhotoTags);
+            context.ReferencePhotos.Remove(dbPhoto);
+        }
+        await context.SaveChangesAsync();
+
+        foreach (var item in selected)
+        {
+            try { File.Delete(item.Photo.FilePath); } catch { }
+            if (!string.IsNullOrEmpty(item.Photo.ThumbnailPath))
+            {
+                try { File.Delete(item.Photo.ThumbnailPath); } catch { }
+            }
+            Photos.Remove(item);
+        }
+
+        _loadedCount -= selected.Count;
+        _totalCount -= selected.Count;
+        UpdateSelectionState();
+    }
+
+    [RelayCommand]
+    private async Task LoadMorePhotos()
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        IQueryable<ReferencePhoto> query = context.ReferencePhotos
+            .Include(rp => rp.ReferencePhotoTags)
+                .ThenInclude(rpt => rpt.Tag);
+
+        if (SelectedTag != null)
+        {
+            query = query.Where(rp => rp.ReferencePhotoTags.Any(rpt => rpt.TagId == SelectedTag.Id));
+        }
+
+        var morePhotos = await query
+            .OrderByDescending(rp => rp.ImportedAt)
+            .Skip(_loadedCount)
+            .Take(PageSize)
+            .ToListAsync();
+
+        foreach (var p in morePhotos)
+        {
+            Photos.Add(new LibraryPhotoItem { Photo = p });
+        }
+
+        _loadedCount += morePhotos.Count;
+        HasMorePhotos = _loadedCount < _totalCount;
     }
 
     private void UpdateSelectionState()
@@ -221,9 +313,17 @@ public partial class LibraryViewModel : ObservableObject
             query = query.Where(rp => rp.ReferencePhotoTags.Any(rpt => rpt.TagId == SelectedTag.Id));
         }
 
-        var photos = await query.OrderByDescending(rp => rp.ImportedAt).ToListAsync();
+        _totalCount = await query.CountAsync();
+
+        var photos = await query
+            .OrderByDescending(rp => rp.ImportedAt)
+            .Take(PageSize)
+            .ToListAsync();
+
         Photos = new ObservableCollection<LibraryPhotoItem>(
             photos.Select(p => new LibraryPhotoItem { Photo = p }));
+        _loadedCount = photos.Count;
+        HasMorePhotos = _loadedCount < _totalCount;
         HasSelection = false;
     }
 }

@@ -26,20 +26,23 @@
                 Visibility="{Binding IsEditing, Converter={StaticResource BoolToVis}}">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel>
-                    <TextBlock Text="Plan Name" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8"/>
+                    <TextBlock Text="Plan Name" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8"
+                               Foreground="{StaticResource TextBrush}"/>
                     <TextBox Text="{Binding PlanName, UpdateSourceTrigger=PropertyChanged}"
                              FontSize="14" Padding="8" Margin="0,0,0,16"/>
 
-                    <TextBlock Text="Exercises" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8"/>
+                    <TextBlock Text="Exercises" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8"
+                               Foreground="{StaticResource TextBrush}"/>
 
                     <ItemsControl ItemsSource="{Binding Exercises}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                                        CornerRadius="6" Padding="12" Margin="0,0,0,8">
+                                        CornerRadius="2" Padding="12" Margin="0,0,0,8">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -49,20 +52,30 @@
 
                                         <ComboBox Grid.Column="0" ItemsSource="{Binding AvailableTags}"
                                                   SelectedItem="{Binding SelectedTag}"
-                                                  DisplayMemberPath="Name" FontSize="14" Margin="0,0,8,0"/>
+                                                  FontSize="14" Margin="0,0,8,0">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Name}"/>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
 
                                         <TextBlock Grid.Column="1" Text="Duration:" VerticalAlignment="Center"
-                                                   Margin="0,0,4,0" FontSize="13"/>
+                                                   Margin="0,0,4,0" FontSize="13" Foreground="{StaticResource TextLightBrush}"/>
                                         <TextBox Grid.Column="2" Text="{Binding DurationMinutes, UpdateSourceTrigger=PropertyChanged}"
                                                  Width="40" FontSize="14" Padding="4" TextAlignment="Center"/>
                                         <TextBlock Grid.Column="3" Text="m" VerticalAlignment="Center"
-                                                   Margin="2,0,8,0" FontSize="13"/>
+                                                   Margin="2,0,8,0" FontSize="13" Foreground="{StaticResource TextLightBrush}"/>
                                         <TextBox Grid.Column="4" Text="{Binding DurationSeconds, UpdateSourceTrigger=PropertyChanged}"
                                                  Width="40" FontSize="14" Padding="4" TextAlignment="Center"/>
                                         <TextBlock Grid.Column="5" Text="s" VerticalAlignment="Center"
-                                                   Margin="2,0,0,0" FontSize="13"/>
+                                                   Margin="2,0,0,0" FontSize="13" Foreground="{StaticResource TextLightBrush}"/>
 
-                                        <!-- Remove button positioned via margin trick -->
+                                        <Button Grid.Column="6" Content="X" Style="{StaticResource DangerButton}"
+                                                Padding="8,4" FontSize="11" Margin="12,0,0,0"
+                                                VerticalAlignment="Center"
+                                                Command="{Binding DataContext.RemoveExerciseCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"/>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
@@ -100,7 +113,7 @@
 
                                     <DockPanel Grid.Row="0">
                                         <TextBlock Text="{Binding Name}" FontSize="18" FontWeight="SemiBold"
-                                                   DockPanel.Dock="Left"/>
+                                                   Foreground="{StaticResource TextBrush}" DockPanel.Dock="Left"/>
                                         <StackPanel Orientation="Horizontal" DockPanel.Dock="Right"
                                                     HorizontalAlignment="Right">
                                             <Button Content="Edit" Style="{StaticResource SecondaryButton}"

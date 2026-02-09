@@ -18,9 +18,12 @@
         <!-- Header -->
         <DockPanel Grid.Row="0" Margin="0,0,0,20">
             <TextBlock Text="Photo Library" Style="{StaticResource PageHeader}" DockPanel.Dock="Left"/>
-            <Button Content="Import Photos" Style="{StaticResource PrimaryButton}"
-                    Command="{Binding NavigateToImportCommand}" DockPanel.Dock="Right"
-                    HorizontalAlignment="Right"/>
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                <Button Content="Add Drawing" Style="{StaticResource SecondaryButton}"
+                        Command="{Binding NavigateToAddDrawingCommand}" Margin="0,0,8,0"/>
+                <Button Content="Import Photos" Style="{StaticResource PrimaryButton}"
+                        Command="{Binding NavigateToImportCommand}"/>
+            </StackPanel>
         </DockPanel>
 
         <!-- Tag Filter -->
@@ -47,7 +50,7 @@
         <!-- Tag Editing Bar (visible when photos are selected) -->
         <Border Grid.Row="2" Background="{StaticResource CardBrush}"
                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                CornerRadius="8" Padding="12" Margin="0,0,0,12"
+                CornerRadius="2" Padding="12" Margin="0,0,0,12"
                 Visibility="{Binding HasSelection, Converter={StaticResource BoolToVis}}">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
@@ -70,10 +73,11 @@
                                     </Button.Content>
                                     <Button.Style>
                                         <Style TargetType="Button">
+                                            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
                                             <Setter Property="Template">
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="Button">
-                                                        <Border x:Name="Bd" CornerRadius="14"
+                                                        <Border x:Name="Bd" CornerRadius="2"
                                                                 Padding="{TemplateBinding Padding}"
                                                                 Background="{StaticResource BackgroundBrush}"
                                                                 BorderBrush="{StaticResource BorderBrush}"
@@ -86,8 +90,8 @@
                                                                 <Setter Property="Foreground" Value="White"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding IsPartial}" Value="True">
-                                                                <Setter TargetName="Bd" Property="Background" Value="#93C5FD"/>
-                                                                <Setter Property="Foreground" Value="White"/>
+                                                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentBrush}"/>
+                                                                <Setter Property="Foreground" Value="Black"/>
                                                             </DataTrigger>
                                                             <Trigger Property="IsMouseOver" Value="True">
                                                                 <Setter TargetName="Bd" Property="Opacity" Value="0.85"/>
@@ -110,14 +114,18 @@
                             Padding="10,5" FontSize="12" Margin="0,0,4,0"
                             Command="{Binding SelectAllCommand}"/>
                     <Button Content="Clear" Style="{StaticResource SecondaryButton}"
-                            Padding="10,5" FontSize="12"
+                            Padding="10,5" FontSize="12" Margin="0,0,4,0"
                             Command="{Binding ClearSelectionCommand}"/>
+                    <Button Content="Delete Selected" Style="{StaticResource DangerButton}"
+                            Padding="10,5" FontSize="12"
+                            Command="{Binding DeleteSelectedCommand}"/>
                 </StackPanel>
             </DockPanel>
         </Border>
 
         <!-- Photo Grid -->
         <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
             <ItemsControl ItemsSource="{Binding Photos}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -151,7 +159,7 @@
                                           HorizontalAlignment="Left" VerticalAlignment="Top"
                                           Margin="4,4,0,0" Panel.ZIndex="1"/>
 
-                                <Image Source="{Binding Photo.FilePath, Converter={StaticResource FilePathToImage}, ConverterParameter=200, IsAsync=True}"
+                                <Image Source="{Binding DisplayImagePath, Converter={StaticResource FilePathToImage}, ConverterParameter=200, IsAsync=True}"
                                        Stretch="UniformToFill" Grid.Row="0">
                                     <Image.Clip>
                                         <RectangleGeometry Rect="0,0,168,150" RadiusX="4" RadiusY="4"/>
@@ -177,6 +185,13 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+
+            <!-- Load More Button -->
+            <Button Content="Load More Photos" Style="{StaticResource SecondaryButton}"
+                    HorizontalAlignment="Center" Margin="0,16,0,8" Padding="24,10"
+                    Command="{Binding LoadMorePhotosCommand}"
+                    Visibility="{Binding HasMorePhotos, Converter={StaticResource BoolToVis}}"/>
+            </StackPanel>
         </ScrollViewer>
 
         <!-- Empty State -->
