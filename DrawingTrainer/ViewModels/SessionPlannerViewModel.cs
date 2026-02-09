@@ -19,6 +19,9 @@ public partial class ExerciseItem : ObservableObject
     [ObservableProperty]
     private int _durationSeconds;
 
+    [ObservableProperty]
+    private int _repeatCount = 1;
+
     public ObservableCollection<Tag> AvailableTags { get; set; } = [];
 }
 
@@ -88,7 +91,9 @@ public partial class SessionPlannerViewModel : ObservableObject
 
         var exerciseData = Exercises
             .Where(e => e.SelectedTag != null)
-            .Select(e => (e.SelectedTag!.Id, e.DurationMinutes * 60 + e.DurationSeconds))
+            .SelectMany(e => Enumerable.Repeat(
+                (e.SelectedTag!.Id, e.DurationMinutes * 60 + e.DurationSeconds),
+                Math.Max(1, e.RepeatCount)))
             .ToList();
 
         if (exerciseData.Count == 0) return;
@@ -119,16 +124,28 @@ public partial class SessionPlannerViewModel : ObservableObject
         PlanName = plan.Name;
         Exercises.Clear();
 
-        foreach (var exercise in plan.Exercises.OrderBy(e => e.SortOrder))
+        var ordered = plan.Exercises.OrderBy(e => e.SortOrder).ToList();
+        for (int i = 0; i < ordered.Count;)
         {
-            var item = new ExerciseItem
+            var current = ordered[i];
+            int count = 1;
+            while (i + count < ordered.Count
+                && ordered[i + count].TagId == current.TagId
+                && ordered[i + count].DurationSeconds == current.DurationSeconds)
+            {
+                count++;
+            }
+
+            Exercises.Add(new ExerciseItem
             {
                 AvailableTags = AvailableTags,
-                SelectedTag = AvailableTags.FirstOrDefault(t => t.Id == exercise.TagId),
-                DurationMinutes = exercise.DurationSeconds / 60,
-                DurationSeconds = exercise.DurationSeconds % 60
-            };
-            Exercises.Add(item);
+                SelectedTag = AvailableTags.FirstOrDefault(t => t.Id == current.TagId),
+                DurationMinutes = current.DurationSeconds / 60,
+                DurationSeconds = current.DurationSeconds % 60,
+                RepeatCount = count
+            });
+
+            i += count;
         }
 
         IsEditing = true;
