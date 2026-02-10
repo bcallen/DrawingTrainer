@@ -234,6 +234,76 @@ public partial class App : Application
             cmd.ExecuteNonQuery();
         }
 
+        // Migration 5: Make SessionExerciseId nullable in SessionExerciseResults
+        // (allows deleting exercises from plans without breaking past session history)
+        bool needsSerMigration = false;
+        using (var cmd = connection.CreateCommand())
+        {
+            cmd.CommandText = "PRAGMA table_info(SessionExerciseResults)";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                if (reader.GetString(1) == "SessionExerciseId")
+                {
+                    // Column 3 is 'notnull' flag: 1 = NOT NULL, 0 = nullable
+                    needsSerMigration = reader.GetInt32(3) == 1;
+                    break;
+                }
+            }
+        }
+
+        if (needsSerMigration)
+        {
+            using var transaction5 = connection.BeginTransaction();
+            try
+            {
+                using var pragmaOff5 = connection.CreateCommand();
+                pragmaOff5.CommandText = "PRAGMA foreign_keys=off";
+                pragmaOff5.ExecuteNonQuery();
+
+                using var createNew5 = connection.CreateCommand();
+                createNew5.CommandText = @"
+                    CREATE TABLE SessionExerciseResults_new (
+                        Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        DrawingSessionId INTEGER NOT NULL,
+                        SessionExerciseId INTEGER NULL,
+                        ReferencePhotoId INTEGER NOT NULL,
+                        SortOrder INTEGER NOT NULL,
+                        WasSkipped INTEGER NOT NULL,
+                        FOREIGN KEY (DrawingSessionId) REFERENCES DrawingSessions(Id),
+                        FOREIGN KEY (SessionExerciseId) REFERENCES SessionExercises(Id) ON DELETE SET NULL,
+                        FOREIGN KEY (ReferencePhotoId) REFERENCES ReferencePhotos(Id)
+                    )";
+                createNew5.ExecuteNonQuery();
+
+                using var copyData5 = connection.CreateCommand();
+                copyData5.CommandText = @"
+                    INSERT INTO SessionExerciseResults_new (Id, DrawingSessionId, SessionExerciseId, ReferencePhotoId, SortOrder, WasSkipped)
+                    SELECT Id, DrawingSessionId, SessionExerciseId, ReferencePhotoId, SortOrder, WasSkipped
+                    FROM SessionExerciseResults";
+                copyData5.ExecuteNonQuery();
+
+                using var dropOld5 = connection.CreateCommand();
+                dropOld5.CommandText = "DROP TABLE SessionExerciseResults";
+                dropOld5.ExecuteNonQuery();
+
+                using var rename5 = connection.CreateCommand();
+                rename5.CommandText = "ALTER TABLE SessionExerciseResults_new RENAME TO SessionExerciseResults";
+                rename5.ExecuteNonQuery();
+
+                using var pragmaOn5 = connection.CreateCommand();
+                pragmaOn5.CommandText = "PRAGMA foreign_keys=on";
+                pragmaOn5.ExecuteNonQuery();
+
+                transaction5.Commit();
+            }
+            catch
+            {
+                transaction5.Rollback();
+                throw;
+            }
+        }
+
         connection.Close();
     }
 

@@ -56,7 +56,9 @@ public class DrawingTrainerDbContext : DbContext
         modelBuilder.Entity<SessionExerciseResult>()
             .HasOne(ser => ser.SessionExercise)
             .WithMany()
-            .HasForeignKey(ser => ser.SessionExerciseId);
+            .HasForeignKey(ser => ser.SessionExerciseId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<SessionExerciseResult>()
             .HasOne(ser => ser.ReferencePhoto)

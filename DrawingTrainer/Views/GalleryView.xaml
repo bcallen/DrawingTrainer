@@ -285,9 +285,14 @@
 
                 <!-- Header -->
                 <DockPanel Grid.Row="0" Margin="0,0,0,8">
-                    <Button Content="Back" Style="{StaticResource SecondaryButton}"
-                            Command="{Binding ClearSelectionCommand}" DockPanel.Dock="Left"
-                            Padding="12,6"/>
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                        <Button Content="Back" Style="{StaticResource SecondaryButton}"
+                                Command="{Binding ClearSelectionCommand}"
+                                Padding="12,6" Margin="0,0,8,0"/>
+                        <Button Content="Delete" Style="{StaticResource DangerButton}"
+                                Command="{Binding DeleteSelectedDrawingCommand}"
+                                Padding="12,6"/>
+                    </StackPanel>
                     <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
                         <Button Content="Previous" Style="{StaticResource SecondaryButton}"
                                 Command="{Binding NavigatePreviousCommand}" Padding="12,6" Margin="0,0,4,0"/>

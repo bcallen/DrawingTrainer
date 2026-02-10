@@ -91,6 +91,19 @@ public partial class PostSessionViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task RemoveDrawing(UploadedDrawingItem item)
+    {
+        await _sessionService.DeleteDrawingAsync(item.Drawing.Id);
+
+        // Remove from the parent exercise's collection
+        foreach (var exercise in ExerciseResults)
+        {
+            if (exercise.UploadedDrawings.Remove(item))
+                break;
+        }
+    }
+
+    [RelayCommand]
     private void Done()
     {
         _navigationService.NavigateTo<GalleryViewModel>();
@@ -110,10 +123,12 @@ public partial class PostSessionViewModel : ObservableObject
         var session = await _sessionService.GetSessionWithResultsAsync(sessionId);
         if (session == null) return;
 
+        var completedCount = session.ExerciseResults.Count(r => !r.WasSkipped);
         SessionSummary = $"Session: {session.SessionPlan?.Name ?? "Unknown"} - " +
-                         $"{session.ExerciseResults.Count} exercises completed";
+                         $"{completedCount} exercises completed";
 
         var items = session.ExerciseResults
+            .Where(r => !r.WasSkipped)
             .OrderBy(r => r.SortOrder)
             .Select(r => new ExerciseResultItem
             {

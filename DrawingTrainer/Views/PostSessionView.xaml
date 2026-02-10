@@ -94,6 +94,11 @@
                                                     <TextBlock Text="{Binding ArtistName}" FontSize="11"
                                                                Foreground="{StaticResource PrimaryBrush}"
                                                                VerticalAlignment="Center"/>
+                                                    <Button Content="X" Style="{StaticResource DangerButton}"
+                                                            FontSize="9" Padding="4,1" Margin="6,0,0,0"
+                                                            VerticalAlignment="Center"
+                                                            Command="{Binding DataContext.RemoveDrawingCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}"/>
                                                 </StackPanel>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>

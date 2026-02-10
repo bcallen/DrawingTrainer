@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Windows;
 
 namespace DrawingTrainer.ViewModels;
 
@@ -199,6 +200,24 @@ public partial class GalleryViewModel : ObservableObject
     [RelayCommand]
     private void ClearSelection()
     {
+        SelectedDrawing = null;
+    }
+
+    [RelayCommand]
+    private async Task DeleteSelectedDrawing()
+    {
+        if (SelectedDrawing == null) return;
+
+        var result = MessageBox.Show(
+            "Are you sure you want to delete this drawing? This cannot be undone.",
+            "Delete Drawing",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (result != MessageBoxResult.Yes) return;
+
+        await _sessionService.DeleteDrawingAsync(SelectedDrawing.Drawing.Id);
+        Drawings.Remove(SelectedDrawing);
         SelectedDrawing = null;
     }
 

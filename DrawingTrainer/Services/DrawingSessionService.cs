@@ -16,6 +16,7 @@ public interface IDrawingSessionService
     Task<DrawingSession?> GetSessionWithResultsAsync(int sessionId);
     Task<List<CompletedDrawing>> GetDrawingsAsync(int? tagId = null, int? artistId = null);
     Task<CompletedDrawing> UploadManualDrawingAsync(string filePath, int tagId, int durationSeconds, DateTime drawnAt, int? referencePhotoId, int? artistId = null);
+    Task DeleteDrawingAsync(int drawingId);
 }
 
 public class DrawingSessionService : IDrawingSessionService
@@ -139,7 +140,7 @@ public class DrawingSessionService : IDrawingSessionService
             .Include(ds => ds.ExerciseResults)
                 .ThenInclude(er => er.ReferencePhoto)
             .Include(ds => ds.ExerciseResults)
-                .ThenInclude(er => er.SessionExercise)
+                .ThenInclude(er => er.SessionExercise!)
                     .ThenInclude(se => se.Tag)
             .Include(ds => ds.ExerciseResults)
                 .ThenInclude(er => er.CompletedDrawings)
@@ -154,7 +155,7 @@ public class DrawingSessionService : IDrawingSessionService
             .Include(cd => cd.SessionExerciseResult)
                 .ThenInclude(ser => ser!.ReferencePhoto)
             .Include(cd => cd.SessionExerciseResult)
-                .ThenInclude(ser => ser!.SessionExercise)
+                .ThenInclude(ser => ser!.SessionExercise!)
                     .ThenInclude(se => se.Tag)
             .Include(cd => cd.Tag)
             .Include(cd => cd.ReferencePhoto)
@@ -164,7 +165,7 @@ public class DrawingSessionService : IDrawingSessionService
         if (tagId.HasValue)
         {
             query = query.Where(cd =>
-                (cd.SessionExerciseResultId != null && cd.SessionExerciseResult!.SessionExercise.TagId == tagId.Value) ||
+                (cd.SessionExerciseResultId != null && cd.SessionExerciseResult!.SessionExercise != null && cd.SessionExerciseResult.SessionExercise.TagId == tagId.Value) ||
                 (cd.SessionExerciseResultId == null && cd.TagId == tagId.Value));
         }
 
@@ -197,5 +198,21 @@ public class DrawingSessionService : IDrawingSessionService
         context.CompletedDrawings.Add(drawing);
         await context.SaveChangesAsync();
         return drawing;
+    }
+
+    public async Task DeleteDrawingAsync(int drawingId)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var drawing = await context.CompletedDrawings.FindAsync(drawingId);
+        if (drawing == null) return;
+
+        context.CompletedDrawings.Remove(drawing);
+        await context.SaveChangesAsync();
+
+        // Delete the stored file
+        if (!string.IsNullOrEmpty(drawing.FilePath) && File.Exists(drawing.FilePath))
+        {
+            try { File.Delete(drawing.FilePath); } catch { }
+        }
     }
 }
