@@ -32,4 +32,7 @@ public partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private void NavigateToGallery() => _navigationService.NavigateTo<GalleryViewModel>();
+
+    [RelayCommand]
+    private void NavigateToArtists() => _navigationService.NavigateTo<ArtistManagementViewModel>();
 }

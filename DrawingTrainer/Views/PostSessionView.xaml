@@ -11,15 +11,32 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0" Text="Session Complete!" Style="{StaticResource PageHeader}"/>
         <TextBlock Grid.Row="1" Text="{Binding SessionSummary}" FontSize="14"
-                   Foreground="{StaticResource TextLightBrush}" Margin="0,0,0,20"/>
+                   Foreground="{StaticResource TextLightBrush}" Margin="0,0,0,12"/>
 
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+        <!-- Artist Selection -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,16">
+            <TextBlock Text="Artist:" VerticalAlignment="Center" Margin="0,0,8,0"
+                       Foreground="{StaticResource TextLightBrush}" FontSize="14"/>
+            <ComboBox ItemsSource="{Binding Artists}" SelectedItem="{Binding SelectedArtist}"
+                      Width="200" FontSize="14">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}"/>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <TextBlock Text="(optional)" VerticalAlignment="Center" Margin="8,0,0,0"
+                       Foreground="#555555" FontSize="12"/>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
             <ItemsControl ItemsSource="{Binding ExerciseResults}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -28,7 +45,7 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="120"/>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Reference Thumbnail -->
@@ -54,24 +71,34 @@
                                             </Style>
                                         </TextBlock.Style>
                                     </TextBlock>
-                                    <TextBlock Text="Drawing uploaded!" FontSize="12"
-                                               Foreground="{StaticResource SuccessBrush}" Margin="0,4,0,0"
-                                               Visibility="{Binding HasDrawing, Converter={StaticResource BoolToVis}}"/>
                                 </StackPanel>
 
-                                <!-- Upload Button / Drawing Thumbnail -->
-                                <Grid Grid.Column="2">
+                                <!-- Upload Button + Uploaded Drawings -->
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center" MinWidth="140">
                                     <Button Content="Upload Drawing" Style="{StaticResource PrimaryButton}"
-                                            FontSize="11" Padding="8,6"
+                                            FontSize="11" Padding="8,6" HorizontalAlignment="Right"
                                             Command="{Binding DataContext.UploadDrawingCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}"
-                                            Visibility="{Binding HasDrawing, Converter={StaticResource BoolToVis}, ConverterParameter=Invert}"/>
-                                    <Border CornerRadius="2" ClipToBounds="True" Height="90"
-                                            Visibility="{Binding HasDrawing, Converter={StaticResource BoolToVis}}">
-                                        <Image Source="{Binding DrawingPath, Converter={StaticResource FilePathToImage}, ConverterParameter=120}"
-                                               Stretch="UniformToFill"/>
-                                    </Border>
-                                </Grid>
+                                            CommandParameter="{Binding}"/>
+
+                                    <!-- List of uploaded drawings -->
+                                    <ItemsControl ItemsSource="{Binding UploadedDrawings}" Margin="0,6,0,0">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0"
+                                                            HorizontalAlignment="Right">
+                                                    <Border CornerRadius="2" ClipToBounds="True"
+                                                            Width="40" Height="30" Margin="0,0,6,0">
+                                                        <Image Source="{Binding DrawingPath, Converter={StaticResource FilePathToImage}, ConverterParameter=80}"
+                                                               Stretch="UniformToFill"/>
+                                                    </Border>
+                                                    <TextBlock Text="{Binding ArtistName}" FontSize="11"
+                                                               Foreground="{StaticResource PrimaryBrush}"
+                                                               VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -79,7 +106,7 @@
             </ItemsControl>
         </ScrollViewer>
 
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
             <Button Content="Back to Planner" Style="{StaticResource SecondaryButton}"
                     Command="{Binding BackToPlannerCommand}" Margin="0,0,8,0"/>
             <Button Content="View Gallery" Style="{StaticResource PrimaryButton}"

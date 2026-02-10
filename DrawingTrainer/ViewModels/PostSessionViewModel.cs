@@ -7,6 +7,17 @@ using System.Collections.ObjectModel;
 
 namespace DrawingTrainer.ViewModels;
 
+public partial class UploadedDrawingItem : ObservableObject
+{
+    public CompletedDrawing Drawing { get; set; } = null!;
+
+    [ObservableProperty]
+    private string _drawingPath = string.Empty;
+
+    [ObservableProperty]
+    private string _artistName = string.Empty;
+}
+
 public partial class ExerciseResultItem : ObservableObject
 {
     public SessionExerciseResult Result { get; set; } = null!;
@@ -18,19 +29,17 @@ public partial class ExerciseResultItem : ObservableObject
     private string _categoryName = string.Empty;
 
     [ObservableProperty]
-    private string _drawingPath = string.Empty;
-
-    [ObservableProperty]
-    private bool _hasDrawing;
-
-    [ObservableProperty]
     private bool _wasSkipped;
+
+    [ObservableProperty]
+    private ObservableCollection<UploadedDrawingItem> _uploadedDrawings = [];
 }
 
 public partial class PostSessionViewModel : ObservableObject
 {
     private readonly IDrawingSessionService _sessionService;
     private readonly INavigationService _navigationService;
+    private readonly IArtistService _artistService;
 
     [ObservableProperty]
     private ObservableCollection<ExerciseResultItem> _exerciseResults = [];
@@ -38,12 +47,20 @@ public partial class PostSessionViewModel : ObservableObject
     [ObservableProperty]
     private string _sessionSummary = string.Empty;
 
+    [ObservableProperty]
+    private ObservableCollection<Artist> _artists = [];
+
+    [ObservableProperty]
+    private Artist? _selectedArtist;
+
     public PostSessionViewModel(
         IDrawingSessionService sessionService,
-        INavigationService navigationService)
+        INavigationService navigationService,
+        IArtistService artistService)
     {
         _sessionService = sessionService;
         _navigationService = navigationService;
+        _artistService = artistService;
     }
 
     public void Initialize(int drawingSessionId)
@@ -62,9 +79,14 @@ public partial class PostSessionViewModel : ObservableObject
 
         if (dialog.ShowDialog() == true)
         {
-            var drawing = await _sessionService.UploadDrawingAsync(item.Result.Id, dialog.FileName);
-            item.DrawingPath = drawing.FilePath;
-            item.HasDrawing = true;
+            var drawing = await _sessionService.UploadDrawingAsync(
+                item.Result.Id, dialog.FileName, SelectedArtist?.Id);
+            item.UploadedDrawings.Add(new UploadedDrawingItem
+            {
+                Drawing = drawing,
+                DrawingPath = drawing.FilePath,
+                ArtistName = SelectedArtist?.Name ?? string.Empty
+            });
         }
     }
 
@@ -82,6 +104,9 @@ public partial class PostSessionViewModel : ObservableObject
 
     private async Task LoadSessionAsync(int sessionId)
     {
+        var artistList = await _artistService.GetAllArtistsAsync();
+        Artists = new ObservableCollection<Artist>(artistList);
+
         var session = await _sessionService.GetSessionWithResultsAsync(sessionId);
         if (session == null) return;
 
@@ -95,9 +120,14 @@ public partial class PostSessionViewModel : ObservableObject
                 Result = r,
                 ReferencePhotoPath = r.ReferencePhoto?.FilePath ?? string.Empty,
                 CategoryName = r.SessionExercise?.Tag?.Name ?? "Unknown",
-                DrawingPath = r.CompletedDrawing?.FilePath ?? string.Empty,
-                HasDrawing = r.CompletedDrawing != null,
-                WasSkipped = r.WasSkipped
+                WasSkipped = r.WasSkipped,
+                UploadedDrawings = new ObservableCollection<UploadedDrawingItem>(
+                    r.CompletedDrawings.Select(cd => new UploadedDrawingItem
+                    {
+                        Drawing = cd,
+                        DrawingPath = cd.FilePath,
+                        ArtistName = cd.Artist?.Name ?? string.Empty
+                    }))
             })
             .ToList();
 

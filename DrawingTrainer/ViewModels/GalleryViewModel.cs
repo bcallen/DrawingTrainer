@@ -32,6 +32,9 @@ public partial class GalleryItem : ObservableObject
     [ObservableProperty]
     private int _durationSeconds;
 
+    [ObservableProperty]
+    private string _artistName = string.Empty;
+
     public string DurationText
     {
         get
@@ -56,6 +59,7 @@ public partial class GalleryViewModel : ObservableObject
 {
     private readonly IDrawingSessionService _sessionService;
     private readonly IDbContextFactory<DrawingTrainerDbContext> _contextFactory;
+    private readonly IArtistService _artistService;
 
     private bool _pendingAddDrawing;
     private int? _pendingReferencePhotoId;
@@ -68,6 +72,12 @@ public partial class GalleryViewModel : ObservableObject
 
     [ObservableProperty]
     private Tag? _selectedTag;
+
+    [ObservableProperty]
+    private ObservableCollection<Artist> _artists = [];
+
+    [ObservableProperty]
+    private Artist? _selectedArtist;
 
     [ObservableProperty]
     private GalleryItem? _selectedDrawing;
@@ -106,6 +116,9 @@ public partial class GalleryViewModel : ObservableObject
     [ObservableProperty]
     private bool _isPickingReferencePhoto;
 
+    [ObservableProperty]
+    private Artist? _addArtist;
+
     public string AddDrawingFileName => string.IsNullOrEmpty(AddDrawingFilePath)
         ? string.Empty
         : Path.GetFileName(AddDrawingFilePath);
@@ -123,10 +136,12 @@ public partial class GalleryViewModel : ObservableObject
 
     public GalleryViewModel(
         IDrawingSessionService sessionService,
-        IDbContextFactory<DrawingTrainerDbContext> contextFactory)
+        IDbContextFactory<DrawingTrainerDbContext> contextFactory,
+        IArtistService artistService)
     {
         _sessionService = sessionService;
         _contextFactory = contextFactory;
+        _artistService = artistService;
         _ = LoadAsync();
     }
 
@@ -149,6 +164,11 @@ public partial class GalleryViewModel : ObservableObject
     }
 
     partial void OnSelectedTagChanged(Tag? value)
+    {
+        _ = LoadDrawingsAsync();
+    }
+
+    partial void OnSelectedArtistChanged(Artist? value)
     {
         _ = LoadDrawingsAsync();
     }
@@ -209,7 +229,9 @@ public partial class GalleryViewModel : ObservableObject
     [RelayCommand]
     private async Task ShowAddDrawing()
     {
-        await ShowAddDrawingWithReference(null);
+        int? refId = SelectedDrawing?.Drawing.ReferencePhotoId
+            ?? SelectedDrawing?.Drawing.SessionExerciseResult?.ReferencePhotoId;
+        await ShowAddDrawingWithReference(refId);
     }
 
     private async Task ShowAddDrawingWithReference(int? referencePhotoId)
@@ -220,6 +242,7 @@ public partial class GalleryViewModel : ObservableObject
         AddDurationSeconds = "0";
         AddDrawingFilePath = string.Empty;
         AddReferencePhoto = null;
+        AddArtist = null;
         IsPickingReferencePhoto = false;
 
         await using var context = await _contextFactory.CreateDbContextAsync();
@@ -291,7 +314,8 @@ public partial class GalleryViewModel : ObservableObject
             AddTag.Id,
             totalSeconds,
             AddDate,
-            AddReferencePhoto?.Id);
+            AddReferencePhoto?.Id,
+            AddArtist?.Id);
 
         IsAddingDrawing = false;
         IsPickingReferencePhoto = false;
@@ -305,6 +329,9 @@ public partial class GalleryViewModel : ObservableObject
         var tags = await context.Tags.OrderBy(t => t.Name).ToListAsync();
         Tags = new ObservableCollection<Tag>(tags);
 
+        var artists = await _artistService.GetAllArtistsAsync();
+        Artists = new ObservableCollection<Artist>(artists);
+
         await LoadDrawingsAsync();
         IsLoading = false;
 
@@ -317,7 +344,7 @@ public partial class GalleryViewModel : ObservableObject
 
     private async Task LoadDrawingsAsync()
     {
-        var drawings = await _sessionService.GetDrawingsAsync(SelectedTag?.Id);
+        var drawings = await _sessionService.GetDrawingsAsync(SelectedTag?.Id, SelectedArtist?.Id);
         Drawings = new ObservableCollection<GalleryItem>(
             drawings.Select(d => new GalleryItem
             {
@@ -332,7 +359,8 @@ public partial class GalleryViewModel : ObservableObject
                 Date = d.DrawnAt ?? d.UploadedAt,
                 DurationSeconds = d.DurationSeconds > 0
                     ? d.DurationSeconds
-                    : d.SessionExerciseResult?.SessionExercise?.DurationSeconds ?? 0
+                    : d.SessionExerciseResult?.SessionExercise?.DurationSeconds ?? 0,
+                ArtistName = d.Artist?.Name ?? string.Empty
             }));
     }
 }

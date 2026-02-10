@@ -11,5 +11,5 @@ public class SessionExerciseResult
     public ReferencePhoto ReferencePhoto { get; set; } = null!;
     public int SortOrder { get; set; }
     public bool WasSkipped { get; set; }
-    public CompletedDrawing? CompletedDrawing { get; set; }
+    public List<CompletedDrawing> CompletedDrawings { get; set; } = [];
 }

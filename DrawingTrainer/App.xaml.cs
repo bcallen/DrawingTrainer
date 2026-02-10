@@ -148,6 +148,92 @@ public partial class App : Application
             }
         }
 
+        // Migration 3: Add Artists table and ArtistId to CompletedDrawings (+ remove unique constraint for one-to-many)
+        bool needsArtistMigration = false;
+        using (var cmd = connection.CreateCommand())
+        {
+            cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='Artists'";
+            needsArtistMigration = cmd.ExecuteScalar() == null;
+        }
+
+        if (needsArtistMigration)
+        {
+            using var transaction3 = connection.BeginTransaction();
+            try
+            {
+                using var createArtists = connection.CreateCommand();
+                createArtists.CommandText = @"
+                    CREATE TABLE Artists (
+                        Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        Name TEXT NOT NULL,
+                        CreatedAt TEXT NOT NULL
+                    )";
+                createArtists.ExecuteNonQuery();
+
+                // Rebuild CompletedDrawings to add ArtistId and remove unique index on SessionExerciseResultId
+                using var pragmaOff3 = connection.CreateCommand();
+                pragmaOff3.CommandText = "PRAGMA foreign_keys=off";
+                pragmaOff3.ExecuteNonQuery();
+
+                using var createNew3 = connection.CreateCommand();
+                createNew3.CommandText = @"
+                    CREATE TABLE CompletedDrawings_new (
+                        Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        SessionExerciseResultId INTEGER NULL,
+                        FilePath TEXT NOT NULL,
+                        OriginalFileName TEXT NOT NULL,
+                        UploadedAt TEXT NOT NULL,
+                        TagId INTEGER NULL,
+                        DurationSeconds INTEGER NOT NULL DEFAULT 0,
+                        DrawnAt TEXT NULL,
+                        ReferencePhotoId INTEGER NULL,
+                        ArtistId INTEGER NULL,
+                        FOREIGN KEY (SessionExerciseResultId) REFERENCES SessionExerciseResults(Id),
+                        FOREIGN KEY (TagId) REFERENCES Tags(Id),
+                        FOREIGN KEY (ReferencePhotoId) REFERENCES ReferencePhotos(Id),
+                        FOREIGN KEY (ArtistId) REFERENCES Artists(Id)
+                    )";
+                createNew3.ExecuteNonQuery();
+
+                using var copyData3 = connection.CreateCommand();
+                copyData3.CommandText = @"
+                    INSERT INTO CompletedDrawings_new (Id, SessionExerciseResultId, FilePath, OriginalFileName, UploadedAt, TagId, DurationSeconds, DrawnAt, ReferencePhotoId)
+                    SELECT Id, SessionExerciseResultId, FilePath, OriginalFileName, UploadedAt, TagId, DurationSeconds, DrawnAt, ReferencePhotoId
+                    FROM CompletedDrawings";
+                copyData3.ExecuteNonQuery();
+
+                using var dropOld3 = connection.CreateCommand();
+                dropOld3.CommandText = "DROP TABLE CompletedDrawings";
+                dropOld3.ExecuteNonQuery();
+
+                using var rename3 = connection.CreateCommand();
+                rename3.CommandText = "ALTER TABLE CompletedDrawings_new RENAME TO CompletedDrawings";
+                rename3.ExecuteNonQuery();
+
+                using var pragmaOn3 = connection.CreateCommand();
+                pragmaOn3.CommandText = "PRAGMA foreign_keys=on";
+                pragmaOn3.ExecuteNonQuery();
+
+                transaction3.Commit();
+            }
+            catch
+            {
+                transaction3.Rollback();
+                throw;
+            }
+        }
+
+        // Migration 4: Assign all unattributed drawings to "Brian"
+        using (var cmd = connection.CreateCommand())
+        {
+            cmd.CommandText = @"
+                UPDATE CompletedDrawings
+                SET ArtistId = (SELECT Id FROM Artists WHERE Name = 'Brian' LIMIT 1)
+                WHERE ArtistId IS NULL
+                  AND EXISTS (SELECT 1 FROM Artists WHERE Name = 'Brian')";
+            cmd.ExecuteNonQuery();
+        }
+
         connection.Close();
     }
 
@@ -163,6 +249,7 @@ public partial class App : Application
             options.UseSqlite($"Data Source={dbPath}"));
 
         // Services
+        services.AddSingleton<IArtistService, ArtistService>();
         services.AddSingleton<IPhotoStorageService, PhotoStorageService>();
         services.AddSingleton<IThumbnailService, ThumbnailService>();
         services.AddSingleton<IPhotoImportService, PhotoImportService>();
@@ -179,6 +266,7 @@ public partial class App : Application
         services.AddTransient<ActiveSessionViewModel>();
         services.AddTransient<PostSessionViewModel>();
         services.AddTransient<GalleryViewModel>();
+        services.AddTransient<ArtistManagementViewModel>();
     }
 
     protected override void OnExit(ExitEventArgs e)

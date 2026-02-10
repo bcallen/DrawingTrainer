@@ -27,7 +27,7 @@
                     Visibility="{Binding IsAddingDrawing, Converter={StaticResource BoolToVis}, ConverterParameter=Invert}"/>
         </DockPanel>
 
-        <!-- Tag Filter -->
+        <!-- Filter Row: Tag + Artist -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,16">
             <TextBlock Text="Filter:" VerticalAlignment="Center" Margin="0,0,8,0"
                        Foreground="{StaticResource TextLightBrush}" FontSize="14"/>
@@ -46,6 +46,21 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+
+            <!-- Artist Filter -->
+            <Border Width="1" Height="20" Background="{StaticResource BorderBrush}" Margin="16,0"/>
+            <TextBlock Text="Artist:" VerticalAlignment="Center" Margin="0,0,8,0"
+                       Foreground="{StaticResource TextLightBrush}" FontSize="14"/>
+            <ComboBox ItemsSource="{Binding Artists}" SelectedItem="{Binding SelectedArtist}"
+                      Width="150" FontSize="13">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}"/>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button Content="Clear" Style="{StaticResource SecondaryButton}" Padding="8,3" Margin="4,0,0,0"
+                    Click="ClearArtistFilter_Click" FontSize="11"/>
         </StackPanel>
 
         <!-- Add Drawing Form -->
@@ -113,6 +128,19 @@
                             <TextBlock Text="{Binding AddDrawingFileName}" VerticalAlignment="Center"
                                        Margin="12,0,0,0" FontSize="13" Foreground="{StaticResource TextBrush}"/>
                         </StackPanel>
+                    </StackPanel>
+
+                    <!-- Artist -->
+                    <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,12">
+                        <TextBlock Text="Artist" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,4"
+                                   Foreground="{StaticResource TextLightBrush}"/>
+                        <ComboBox ItemsSource="{Binding Artists}" SelectedItem="{Binding AddArtist}" FontSize="14">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                     </StackPanel>
                 </Grid>
 
@@ -231,8 +259,14 @@
                                                        DockPanel.Dock="Right" HorizontalAlignment="Right"
                                                        VerticalAlignment="Center"/>
                                         </DockPanel>
-                                        <TextBlock Text="{Binding Date, StringFormat='{}{0:MMM d, yyyy}'}"
-                                                   FontSize="11" Foreground="{StaticResource TextLightBrush}"/>
+                                        <DockPanel>
+                                            <TextBlock Text="{Binding Date, StringFormat='{}{0:MMM d, yyyy}'}"
+                                                       FontSize="11" Foreground="{StaticResource TextLightBrush}"
+                                                       DockPanel.Dock="Left"/>
+                                            <TextBlock Text="{Binding ArtistName}" FontSize="11"
+                                                       Foreground="#00BCD4" FontWeight="SemiBold"
+                                                       DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                        </DockPanel>
                                     </StackPanel>
                                 </Grid>
                             </Border>
@@ -317,6 +351,9 @@
                                VerticalAlignment="Center" Margin="16,0,0,0"/>
                     <TextBlock Text="{Binding SelectedDrawing.Date, StringFormat='{}{0:MMMM d, yyyy}'}"
                                FontSize="14" Foreground="{StaticResource TextLightBrush}"
+                               VerticalAlignment="Center" Margin="16,0,0,0"/>
+                    <TextBlock Text="{Binding SelectedDrawing.ArtistName}" FontSize="14"
+                               Foreground="#00BCD4" FontWeight="SemiBold"
                                VerticalAlignment="Center" Margin="16,0,0,0"/>
                 </StackPanel>
             </Grid>
