@@ -254,13 +254,14 @@ public partial class App : Application
 
         if (needsSerMigration)
         {
+            // PRAGMA foreign_keys must be set OUTSIDE the transaction to take effect in SQLite
+            using var pragmaOff5 = connection.CreateCommand();
+            pragmaOff5.CommandText = "PRAGMA foreign_keys=off";
+            pragmaOff5.ExecuteNonQuery();
+
             using var transaction5 = connection.BeginTransaction();
             try
             {
-                using var pragmaOff5 = connection.CreateCommand();
-                pragmaOff5.CommandText = "PRAGMA foreign_keys=off";
-                pragmaOff5.ExecuteNonQuery();
-
                 using var createNew5 = connection.CreateCommand();
                 createNew5.CommandText = @"
                     CREATE TABLE SessionExerciseResults_new (
@@ -291,10 +292,6 @@ public partial class App : Application
                 rename5.CommandText = "ALTER TABLE SessionExerciseResults_new RENAME TO SessionExerciseResults";
                 rename5.ExecuteNonQuery();
 
-                using var pragmaOn5 = connection.CreateCommand();
-                pragmaOn5.CommandText = "PRAGMA foreign_keys=on";
-                pragmaOn5.ExecuteNonQuery();
-
                 transaction5.Commit();
             }
             catch
@@ -302,6 +299,10 @@ public partial class App : Application
                 transaction5.Rollback();
                 throw;
             }
+
+            using var pragmaOn5 = connection.CreateCommand();
+            pragmaOn5.CommandText = "PRAGMA foreign_keys=on";
+            pragmaOn5.ExecuteNonQuery();
         }
 
         connection.Close();
