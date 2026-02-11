@@ -16,6 +16,7 @@ public class DrawingTrainerDbContext : DbContext
     public DbSet<DrawingSession> DrawingSessions => Set<DrawingSession>();
     public DbSet<SessionExerciseResult> SessionExerciseResults => Set<SessionExerciseResult>();
     public DbSet<CompletedDrawing> CompletedDrawings => Set<CompletedDrawing>();
+    public DbSet<Artist> Artists => Set<Artist>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -55,7 +56,9 @@ public class DrawingTrainerDbContext : DbContext
         modelBuilder.Entity<SessionExerciseResult>()
             .HasOne(ser => ser.SessionExercise)
             .WithMany()
-            .HasForeignKey(ser => ser.SessionExerciseId);
+            .HasForeignKey(ser => ser.SessionExerciseId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<SessionExerciseResult>()
             .HasOne(ser => ser.ReferencePhoto)
@@ -64,8 +67,8 @@ public class DrawingTrainerDbContext : DbContext
 
         modelBuilder.Entity<CompletedDrawing>()
             .HasOne(cd => cd.SessionExerciseResult)
-            .WithOne(ser => ser.CompletedDrawing)
-            .HasForeignKey<CompletedDrawing>(cd => cd.SessionExerciseResultId)
+            .WithMany(ser => ser.CompletedDrawings)
+            .HasForeignKey(cd => cd.SessionExerciseResultId)
             .IsRequired(false);
 
         modelBuilder.Entity<CompletedDrawing>()
@@ -78,6 +81,12 @@ public class DrawingTrainerDbContext : DbContext
             .HasOne(cd => cd.ReferencePhoto)
             .WithMany()
             .HasForeignKey(cd => cd.ReferencePhotoId)
+            .IsRequired(false);
+
+        modelBuilder.Entity<CompletedDrawing>()
+            .HasOne(cd => cd.Artist)
+            .WithMany(a => a.CompletedDrawings)
+            .HasForeignKey(cd => cd.ArtistId)
             .IsRequired(false);
 
         // Seed default tags

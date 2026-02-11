@@ -26,6 +26,9 @@
         <DataTemplate DataType="{x:Type vm:GalleryViewModel}">
             <views:GalleryView/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ArtistManagementViewModel}">
+            <views:ArtistManagementView/>
+        </DataTemplate>
     </Window.Resources>
 
     <Grid>
@@ -62,6 +65,8 @@
                             Command="{Binding NavigateToPlannerCommand}"/>
                     <Button Content="GALLERY" Style="{StaticResource SidebarButton}"
                             Command="{Binding NavigateToGalleryCommand}"/>
+                    <Button Content="ARTISTS" Style="{StaticResource SidebarButton}"
+                            Command="{Binding NavigateToArtistsCommand}"/>
                 </StackPanel>
 
                 <!-- Version -->

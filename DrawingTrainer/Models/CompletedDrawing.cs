@@ -19,4 +19,7 @@ public class CompletedDrawing
     public DateTime? DrawnAt { get; set; }
     public int? ReferencePhotoId { get; set; }
     public ReferencePhoto? ReferencePhoto { get; set; }
+
+    public int? ArtistId { get; set; }
+    public Artist? Artist { get; set; }
 }

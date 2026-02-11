@@ -30,6 +30,14 @@ public partial class GalleryView : UserControl
         }
     }
 
+    private void ClearArtistFilter_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is GalleryViewModel vm)
+        {
+            vm.SelectedArtist = null;
+        }
+    }
+
     private void OnKeyDown(object sender, KeyEventArgs e)
     {
         if (DataContext is not GalleryViewModel vm) return;
