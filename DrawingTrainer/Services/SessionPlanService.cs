@@ -88,10 +88,25 @@ public class SessionPlanService : ISessionPlanService
         await using var context = await _contextFactory.CreateDbContextAsync();
         var plan = await context.SessionPlans
             .Include(sp => sp.Exercises)
+            .Include(sp => sp.DrawingSessions)
+                .ThenInclude(ds => ds.ExerciseResults)
+                    .ThenInclude(er => er.CompletedDrawings)
             .FirstOrDefaultAsync(sp => sp.Id == id);
 
         if (plan == null) return;
 
+        // Detach completed drawings from exercise results so they survive deletion
+        foreach (var drawing in plan.DrawingSessions
+            .SelectMany(ds => ds.ExerciseResults)
+            .SelectMany(er => er.CompletedDrawings))
+        {
+            drawing.SessionExerciseResultId = null;
+        }
+
+        // Remove the full dependency chain in order
+        context.SessionExerciseResults.RemoveRange(
+            plan.DrawingSessions.SelectMany(ds => ds.ExerciseResults));
+        context.DrawingSessions.RemoveRange(plan.DrawingSessions);
         context.SessionExercises.RemoveRange(plan.Exercises);
         context.SessionPlans.Remove(plan);
         await context.SaveChangesAsync();
