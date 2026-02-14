@@ -107,13 +107,23 @@ public class DrawingSessionService : IDrawingSessionService
         var storedPath = await _storageService.StoreDrawingPhotoAsync(filePath);
 
         await using var context = await _contextFactory.CreateDbContextAsync();
+
+        // Load the exercise result with its session exercise to copy tag/duration/reference
+        var result = await context.SessionExerciseResults
+            .Include(r => r.SessionExercise)
+            .FirstOrDefaultAsync(r => r.Id == sessionExerciseResultId);
+
         var drawing = new CompletedDrawing
         {
             SessionExerciseResultId = sessionExerciseResultId,
             FilePath = storedPath,
             OriginalFileName = Path.GetFileName(filePath),
             UploadedAt = DateTime.Now,
-            ArtistId = artistId
+            ArtistId = artistId,
+            TagId = result?.SessionExercise?.TagId,
+            DurationSeconds = result?.SessionExercise?.DurationSeconds ?? 0,
+            ReferencePhotoId = result?.ReferencePhotoId,
+            DrawnAt = DateTime.Now
         };
 
         context.CompletedDrawings.Add(drawing);

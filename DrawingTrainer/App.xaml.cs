@@ -305,6 +305,34 @@ public partial class App : Application
             pragmaOn5.ExecuteNonQuery();
         }
 
+        // Migration 6: Backfill TagId, DurationSeconds, ReferencePhotoId on session-based CompletedDrawings
+        // Previously these fields were only set for manual uploads; session drawings relied on navigation chain
+        using (var cmd = connection.CreateCommand())
+        {
+            cmd.CommandText = @"
+                UPDATE CompletedDrawings
+                SET TagId = COALESCE(TagId, (
+                        SELECT se.TagId
+                        FROM SessionExerciseResults ser
+                        JOIN SessionExercises se ON ser.SessionExerciseId = se.Id
+                        WHERE ser.Id = CompletedDrawings.SessionExerciseResultId
+                    )),
+                    DurationSeconds = COALESCE(NULLIF(DurationSeconds, 0), (
+                        SELECT se.DurationSeconds
+                        FROM SessionExerciseResults ser
+                        JOIN SessionExercises se ON ser.SessionExerciseId = se.Id
+                        WHERE ser.Id = CompletedDrawings.SessionExerciseResultId
+                    ), 0),
+                    ReferencePhotoId = COALESCE(ReferencePhotoId, (
+                        SELECT ser.ReferencePhotoId
+                        FROM SessionExerciseResults ser
+                        WHERE ser.Id = CompletedDrawings.SessionExerciseResultId
+                    ))
+                WHERE SessionExerciseResultId IS NOT NULL
+                  AND (TagId IS NULL OR DurationSeconds = 0)";
+            cmd.ExecuteNonQuery();
+        }
+
         connection.Close();
     }
 
